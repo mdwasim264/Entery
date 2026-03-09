@@ -1,0 +1,5 @@
+{
+  "name": "Tailor Order Tracker",
+  "description": "A simple application to track tailor orders, items (Kurta, Pant, Shirt), and delivery status.",
+  "requestFramePermissions": []
+}
