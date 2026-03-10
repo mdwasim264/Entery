@@ -28,16 +28,16 @@ interface Order {
   pant: string;
   shirt: string;
   delivered: boolean;
-  createdAt: number;
+  createdAt: string; // Changed to ISO string for better DB compatibility
 }
 
 const initialData: Order[] = [
-  { id: '1', number: '1669', kurta: 'No', pant: '1 Pic', shirt: '', delivered: false, createdAt: Date.now() - 500000 },
-  { id: '2', number: '1711', kurta: 'Baki', pant: '1 Pic', shirt: '', delivered: false, createdAt: Date.now() - 400000 },
-  { id: '3', number: '1696', kurta: '1 Pic', pant: 'Baki', shirt: '', delivered: false, createdAt: Date.now() - 300000 },
-  { id: '4', number: 'D.R. IRFAN', kurta: '1 Pic', pant: 'No', shirt: '', delivered: false, createdAt: Date.now() - 200000 },
-  { id: '5', number: '1685', kurta: '1 Pic', pant: '1 Pic', shirt: '', delivered: false, createdAt: Date.now() - 100000 },
-  { id: '6', number: '1587', kurta: '1 Pic', pant: '1 Pic', shirt: '', delivered: true, createdAt: Date.now() },
+  { id: '1', number: '1669', kurta: 'No', pant: '1 Pic', shirt: '', delivered: false, createdAt: new Date(Date.now() - 500000).toISOString() },
+  { id: '2', number: '1711', kurta: 'Baki', pant: '1 Pic', shirt: '', delivered: false, createdAt: new Date(Date.now() - 400000).toISOString() },
+  { id: '3', number: '1696', kurta: '1 Pic', pant: 'Baki', shirt: '', delivered: false, createdAt: new Date(Date.now() - 300000).toISOString() },
+  { id: '4', number: 'D.R. IRFAN', kurta: '1 Pic', pant: 'No', shirt: '', delivered: false, createdAt: new Date(Date.now() - 200000).toISOString() },
+  { id: '5', number: '1685', kurta: '1 Pic', pant: '1 Pic', shirt: '', delivered: false, createdAt: new Date(Date.now() - 100000).toISOString() },
+  { id: '6', number: '1587', kurta: '1 Pic', pant: '1 Pic', shirt: '', delivered: true, createdAt: new Date().toISOString() },
 ];
 
 const QUICK_VALUES = ['1 Pic', 'Baki', 'No', 'Urgent'];
@@ -71,10 +71,14 @@ export default function App() {
         .select('*')
         .order('createdAt', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase fetch error:', error);
+        throw error;
+      }
       setOrders(data || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch orders:', err);
+      // If table doesn't exist, we'll keep empty orders but show warning
     } finally {
       setLoading(false);
     }
@@ -93,7 +97,7 @@ export default function App() {
         if (activeTab === 'delivered') return matchesSearch && order.delivered;
         return matchesSearch;
       })
-      .sort((a, b) => b.createdAt - a.createdAt);
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [orders, searchTerm, activeTab]);
 
   const toggleDelivered = async (id: string) => {
@@ -144,10 +148,10 @@ export default function App() {
     if (!newOrder.number) return;
 
     const order: Order = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       ...newOrder,
       delivered: false,
-      createdAt: Date.now()
+      createdAt: new Date().toISOString()
     };
 
     // Optimistic update
