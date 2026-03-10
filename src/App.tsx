@@ -245,65 +245,62 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
       {/* Top Navigation Bar */}
-      <nav className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200">
-            <Scissors className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">TailorFlow</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order Management System</p>
-          </div>
+      <nav className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex flex-col gap-4">
+        {/* Search Bar - Now at the very top */}
+        <div className="relative w-full max-w-6xl mx-auto">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Search by order number or customer name..."
+            className="w-full bg-slate-100 border-none pl-12 pr-4 py-3 text-base rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none shadow-inner"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
-          {(['all', 'pending', 'delivered'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all capitalize ${
-                activeTab === tab 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 max-w-6xl mx-auto w-full">
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200">
+              <Scissors className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">TailorFlow</h1>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order Management System</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+            {(['all', 'pending', 'delivered'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all capitalize ${
+                  activeTab === tab 
+                    ? 'bg-white text-indigo-600 shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <button 
+              onClick={downloadPDF}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95"
             >
-              {tab}
+              <FileText className="w-4 h-4" />
+              PDF
             </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <button 
-            onClick={downloadPDF}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
-          >
-            <FileText className="w-4 h-4" />
-            PDF
-          </button>
-          <button 
-            onClick={downloadCSV}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
-          >
-            <Download className="w-4 h-4" />
-            CSV
-          </button>
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search orders..."
-              className="w-full bg-slate-100 border-none pl-10 pr-4 py-2 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <button 
+              onClick={downloadCSV}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+            >
+              <Download className="w-4 h-4" />
+              CSV
+            </button>
           </div>
-          <button 
-            onClick={downloadCSV}
-            title="Download CSV"
-            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm active:scale-95"
-          >
-            <Download className="w-5 h-5" />
-          </button>
         </div>
       </nav>
 
