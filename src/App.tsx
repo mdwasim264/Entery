@@ -155,13 +155,15 @@ export default function App() {
     setNewOrder({ number: '', kurta: '', pant: '', shirt: '' });
 
     try {
+      if (!supabase) throw new Error('Supabase not initialized');
       const { error } = await supabase
         .from('orders')
         .insert([order]);
 
       if (error) throw error;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save order:', err);
+      alert(`Error: ${err.message || 'Failed to save to database'}. Make sure the "orders" table exists and RLS is disabled or has a public policy.`);
       setOrders(prev => prev.filter(o => o.id !== order.id));
     }
   };
@@ -317,12 +319,13 @@ export default function App() {
                 <div>
                   <h3 className="text-amber-900 font-bold">Supabase Setup Required</h3>
                   <p className="text-amber-700 text-sm mt-1">
-                    To save your data permanently, please add your Supabase credentials in the <b>Secrets</b> panel:
+                    To save your data permanently, please follow these steps:
                   </p>
-                  <ul className="text-amber-700 text-xs mt-2 list-disc list-inside space-y-1 font-mono">
-                    <li>VITE_SUPABASE_URL</li>
-                    <li>VITE_SUPABASE_ANON_KEY</li>
-                  </ul>
+                  <ol className="text-amber-700 text-xs mt-2 list-decimal list-inside space-y-1">
+                    <li>Create the <b>orders</b> table in Supabase SQL Editor.</li>
+                    <li><b>Disable RLS</b> for the orders table OR add a <b>Public Insert/Select</b> policy.</li>
+                    <li>Add your credentials in the <b>Secrets</b> panel (if not already done).</li>
+                  </ol>
                 </div>
               </div>
             </div>
