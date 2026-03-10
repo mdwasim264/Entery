@@ -16,10 +16,13 @@ import {
   Scissors,
   ChevronRight,
   AlertCircle,
-  Download
+  Download,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './supabaseClient';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Order {
   id: string;
@@ -204,6 +207,41 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  const downloadPDF = () => {
+    if (orders.length === 0) return;
+
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(20);
+    doc.setTextColor(79, 70, 229); // Indigo-600
+    doc.text('TailorFlow Order Report', 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+    const tableData = orders.map(order => [
+      order.number,
+      order.kurta || '-',
+      order.pant || '-',
+      order.shirt || '-',
+      order.delivered ? 'Delivered' : 'Pending',
+      new Date(order.createdAt).toLocaleDateString()
+    ]);
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['Order #', 'Kurta', 'Pant', 'Shirt', 'Status', 'Date']],
+      body: tableData,
+      headStyles: { fillColor: [79, 70, 229] }, // Indigo-600
+      alternateRowStyles: { fillColor: [248, 250, 252] }, // Slate-50
+      margin: { top: 35 },
+    });
+
+    doc.save(`tailor_orders_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
       {/* Top Navigation Bar */}
@@ -234,7 +272,21 @@ export default function App() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <button 
+            onClick={downloadPDF}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <FileText className="w-4 h-4" />
+            PDF
+          </button>
+          <button 
+            onClick={downloadCSV}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            CSV
+          </button>
           <div className="relative flex-1 md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
