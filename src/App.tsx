@@ -631,23 +631,6 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Mobile Stats Bar - Redesigned */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-xl text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center gap-8 z-40 md:hidden border border-white/10">
-        <div className="flex flex-col items-center">
-          <span className="text-[7px] text-slate-500 uppercase font-black tracking-widest">Total</span>
-          <span className="text-base font-black">{orders.length}</span>
-        </div>
-        <div className="w-px h-8 bg-white/10" />
-        <div className="flex flex-col items-center">
-          <span className="text-[7px] text-slate-500 uppercase font-black tracking-widest">Pending</span>
-          <span className="text-base font-black text-amber-400">{orders.filter(o => !o.delivered).length}</span>
-        </div>
-        <div className="w-px h-8 bg-white/10" />
-        <div className="flex flex-col items-center">
-          <span className="text-[7px] text-slate-500 uppercase font-black tracking-widest">Done</span>
-          <span className="text-base font-black text-emerald-400">{orders.filter(o => o.delivered).length}</span>
-        </div>
-      </div>
     </div>
   );
 }
