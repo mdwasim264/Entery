@@ -17,7 +17,8 @@ import {
   ChevronRight,
   AlertCircle,
   Download,
-  FileText
+  FileText,
+  Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './supabaseClient';
@@ -51,6 +52,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'delivered'>('all');
   const [currentView, setCurrentView] = useState<'list' | 'create'>('list');
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   // New Order Form State
   const [newOrder, setNewOrder] = useState({
@@ -151,30 +153,76 @@ export default function App() {
     e.preventDefault();
     if (!newOrder.number) return;
 
-    const order: Order = {
-      id: crypto.randomUUID(),
-      ...newOrder,
-      delivered: false,
-      createdAt: new Date().toISOString()
-    };
+    if (editingId) {
+      // Handle Update
+      const updatedOrder = {
+        ...orders.find(o => o.id === editingId),
+        ...newOrder,
+      } as Order;
 
-    // Optimistic update
-    setOrders(prev => [order, ...prev]);
-    setNewOrder({ number: '', kurta: '', pant: '', shirt: '' });
-    setCurrentView('list'); // Go back to list after adding
+      // Optimistic update
+      setOrders(prev => prev.map(o => o.id === editingId ? updatedOrder : o));
+      setNewOrder({ number: '', kurta: '', pant: '', shirt: '' });
+      setEditingId(null);
+      setCurrentView('list');
 
-    try {
-      if (!supabase) throw new Error('Supabase not initialized');
-      const { error } = await supabase
-        .from('orders')
-        .insert([order]);
+      try {
+        if (!supabase) throw new Error('Supabase not initialized');
+        const { error } = await supabase
+          .from('orders')
+          .update(newOrder)
+          .eq('id', editingId);
 
-      if (error) throw error;
-    } catch (err: any) {
-      console.error('Failed to save order:', err);
-      alert(`Error: ${err.message || 'Failed to save to database'}. Make sure the "orders" table exists and RLS is disabled or has a public policy.`);
-      setOrders(prev => prev.filter(o => o.id !== order.id));
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Failed to update order:', err);
+        alert(`Error: ${err.message || 'Failed to update database'}`);
+        fetchOrders(); // Refresh to original state
+      }
+    } else {
+      // Handle Create
+      const order: Order = {
+        id: crypto.randomUUID(),
+        ...newOrder,
+        delivered: false,
+        createdAt: new Date().toISOString()
+      };
+
+      // Optimistic update
+      setOrders(prev => [order, ...prev]);
+      setNewOrder({ number: '', kurta: '', pant: '', shirt: '' });
+      setCurrentView('list');
+
+      try {
+        if (!supabase) throw new Error('Supabase not initialized');
+        const { error } = await supabase
+          .from('orders')
+          .insert([order]);
+
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Failed to save order:', err);
+        alert(`Error: ${err.message || 'Failed to save to database'}`);
+        setOrders(prev => prev.filter(o => o.id !== order.id));
+      }
     }
+  };
+
+  const startEdit = (order: Order) => {
+    setNewOrder({
+      number: order.number,
+      kurta: order.kurta,
+      pant: order.pant,
+      shirt: order.shirt
+    });
+    setEditingId(order.id);
+    setCurrentView('create');
+  };
+
+  const cancelEdit = () => {
+    setNewOrder({ number: '', kurta: '', pant: '', shirt: '' });
+    setEditingId(null);
+    setCurrentView('list');
   };
 
   const setQuickValue = (field: 'kurta' | 'pant' | 'shirt', value: string) => {
@@ -293,7 +341,11 @@ export default function App() {
             {currentView === 'list' ? (
               <>
                 <button 
-                  onClick={() => setCurrentView('create')}
+                  onClick={() => {
+                    setEditingId(null);
+                    setNewOrder({ number: '', kurta: '', pant: '', shirt: '' });
+                    setCurrentView('create');
+                  }}
                   className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 active:scale-95"
                 >
                   <Plus className="w-4 h-4" />
@@ -309,7 +361,7 @@ export default function App() {
               </>
             ) : (
               <button 
-                onClick={() => setCurrentView('list')}
+                onClick={cancelEdit}
                 className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95"
               >
                 <ChevronRight className="w-4 h-4 rotate-180" />
@@ -334,11 +386,11 @@ export default function App() {
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
-                      <Plus className="w-6 h-6 text-indigo-600" />
+                      {editingId ? <Pencil className="w-6 h-6 text-indigo-600" /> : <Plus className="w-6 h-6 text-indigo-600" />}
                     </div>
                     <div>
-                      <h2 className="text-2xl font-black text-slate-800">Create New Order</h2>
-                      <p className="text-slate-400 text-sm font-bold">Fill in the customer details below</p>
+                      <h2 className="text-2xl font-black text-slate-800">{editingId ? 'Edit Order' : 'Create New Order'}</h2>
+                      <p className="text-slate-400 text-sm font-bold">{editingId ? 'Update the order details' : 'Fill in the customer details below'}</p>
                     </div>
                   </div>
                 </div>
@@ -394,7 +446,7 @@ export default function App() {
                   <div className="flex gap-4 pt-4">
                     <button 
                       type="button"
-                      onClick={() => setCurrentView('list')}
+                      onClick={cancelEdit}
                       className="flex-1 bg-slate-100 text-slate-600 font-black py-5 rounded-[1.5rem] hover:bg-slate-200 transition-all"
                     >
                       Cancel
@@ -404,7 +456,7 @@ export default function App() {
                       className="flex-[2] bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-black py-5 rounded-[1.5rem] shadow-xl shadow-indigo-200 hover:shadow-2xl hover:shadow-indigo-300 hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 transition-all flex items-center justify-center gap-3"
                     >
                       <CheckCircle2 className="w-6 h-6" />
-                      Save Order
+                      {editingId ? 'Update Order' : 'Save Order'}
                     </button>
                   </div>
                 </form>
@@ -508,6 +560,13 @@ export default function App() {
                             </div>
 
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => startEdit(order)}
+                                className="p-3 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all active:scale-90"
+                                title="Edit Order"
+                              >
+                                <Pencil className="w-5 h-5" />
+                              </button>
                               <button 
                                 onClick={() => deleteOrder(order.id)}
                                 className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all active:scale-90"
